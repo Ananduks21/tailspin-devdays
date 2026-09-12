@@ -30,6 +30,8 @@ test.describe('Game Listing and Navigation', () => {
 
       const strategyFilter = page.getByTestId('category-filter-1');
       await strategyFilter.check();
+      await expect(page.getByTestId('filter-status')).toHaveText('Showing 4 of 21 games');
+      await expect(page.locator('[data-testid="game-card"]:visible')).toHaveCount(4);
       await page.getByTestId('apply-filters').click();
 
       await expect(page).toHaveURL(/category=1/);
@@ -48,6 +50,8 @@ test.describe('Game Listing and Navigation', () => {
 
       await page.getByTestId('category-filter-1').check();
       await page.getByTestId('publisher-filter').selectOption({ label: 'CodeForge Studios' });
+      await expect(page.getByTestId('filter-status')).toHaveText('Showing 1 of 21 games');
+      await expect(page.locator('[data-testid="game-card"]:visible')).toHaveCount(1);
       await page.getByTestId('apply-filters').click();
 
       await expect(page).toHaveURL(/category=1.*publisher=1/);

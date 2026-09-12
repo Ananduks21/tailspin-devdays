@@ -178,15 +178,7 @@ const publishers = await getAllPublishers(getDatabase());
       if (publisherInput?.value) {
         previewParams.set('publisher', publisherInput.value);
       }
-      const previewCards = cards.filter((card) => {
-        const categoryMatches =
-          previewParams.getAll('category').length === 0 ||
-          previewParams.getAll('category').includes(card.dataset.categoryId ?? '');
-        const publisherMatches =
-          !previewParams.has('publisher') || card.dataset.publisherId === previewParams.get('publisher');
-        return categoryMatches && publisherMatches;
-      });
-      status.textContent = `Showing ${previewCards.length} of ${cards.length} games`;
+      applyFilters(previewParams);
     });
 
     window.addEventListener('popstate', () => {
