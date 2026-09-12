@@ -44,7 +44,7 @@ npm run preview
 
 ## Filter games
 
-The home page includes category and publisher filters. Select one or more categories and, optionally, one publisher, then apply the filters. Filter selections are stored in the URL so filtered catalogs can be bookmarked and shared. The static site progressively enhances the complete catalog in the browser, while the same filter combinations are available to the injectable data-access helpers for build-time and test usage.
+The home page includes category and publisher filters. Select one or more categories and, optionally, one publisher, then apply the filters. Filter selections are stored in the URL so filtered catalogs can be bookmarked and shared; empty filter values are omitted. Counts update while selections change, and Clear restores the unfiltered catalog while preserving browser history. The static site progressively enhances the complete catalog in the browser, while the same filter combinations are available to the injectable data-access helpers for build-time and test usage.
 
 ## Database
 

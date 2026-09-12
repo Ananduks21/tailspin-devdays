@@ -83,6 +83,11 @@ const publishers = await getAllPublishers(getDatabase());
             </div>
           </fieldset>
         </form>
+        <noscript>
+          <p class="mt-3 text-xs text-slate-400">
+            Filtering results requires JavaScript in this static site. You can still use the URL to share filter selections.
+          </p>
+        </noscript>
       </div>
 
       <p class="mb-4 text-sm text-slate-400" data-testid="filter-status" role="status" aria-live="polite">
@@ -111,34 +116,83 @@ const publishers = await getAllPublishers(getDatabase());
   const grid = document.querySelector<HTMLElement>('[data-testid="games-grid"]');
 
   if (form && status && emptyState && grid) {
-    const params = new URLSearchParams(window.location.search);
-    const selectedCategories = new Set(params.getAll('category'));
-    const selectedPublisher = params.get('publisher') ?? '';
     const categoryInputs = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="category"]'));
     const publisherInput = form.querySelector<HTMLSelectElement>('select[name="publisher"]');
 
-    categoryInputs.forEach((input) => {
-      input.checked = selectedCategories.has(input.value);
-    });
-    if (publisherInput) {
-      publisherInput.value = selectedPublisher;
-    }
+    const applyFilters = (params: URLSearchParams): void => {
+      const selectedCategories = new Set(params.getAll('category'));
+      const selectedPublisher = params.get('publisher') ?? '';
 
-    const visibleCards = cards.filter((card) => {
-      const categoryMatches =
-        selectedCategories.size === 0 || selectedCategories.has(card.dataset.categoryId ?? '');
-      const publisherMatches =
-        selectedPublisher === '' || card.dataset.publisherId === selectedPublisher;
-      const visible = categoryMatches && publisherMatches;
-      card.hidden = !visible;
-      return visible;
+      categoryInputs.forEach((input) => {
+        input.checked = selectedCategories.has(input.value);
+      });
+      if (publisherInput) {
+        publisherInput.value = selectedPublisher;
+      }
+
+      const visibleCards = cards.filter((card) => {
+        const categoryMatches =
+          selectedCategories.size === 0 || selectedCategories.has(card.dataset.categoryId ?? '');
+        const publisherMatches =
+          selectedPublisher === '' || card.dataset.publisherId === selectedPublisher;
+        const visible = categoryMatches && publisherMatches;
+        card.hidden = !visible;
+        return visible;
+      });
+
+      const hasFilters = selectedCategories.size > 0 || selectedPublisher !== '';
+      status.textContent = hasFilters
+        ? `Showing ${visibleCards.length} of ${cards.length} games`
+        : `Showing ${cards.length} games`;
+      emptyState.classList.toggle('hidden', visibleCards.length > 0);
+      grid.classList.toggle('hidden', visibleCards.length === 0);
+    };
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const params = new URLSearchParams();
+      categoryInputs
+        .filter((input) => input.checked)
+        .forEach((input) => params.append('category', input.value));
+      if (publisherInput?.value) {
+        params.set('publisher', publisherInput.value);
+      }
+
+      const query = params.toString();
+      const url = query ? `${window.location.pathname}?${query}` : window.location.pathname;
+      window.history.pushState({}, '', url);
+      applyFilters(params);
     });
 
-    const hasFilters = selectedCategories.size > 0 || selectedPublisher !== '';
-    status.textContent = hasFilters
-      ? `Showing ${visibleCards.length} of ${cards.length} games`
-      : `Showing ${cards.length} games`;
-    emptyState.classList.toggle('hidden', visibleCards.length > 0);
-    grid.classList.toggle('hidden', visibleCards.length === 0);
+    form.querySelector<HTMLAnchorElement>('[data-testid="clear-filters"]')?.addEventListener('click', (event) => {
+      event.preventDefault();
+      window.history.pushState({}, '', window.location.pathname);
+      applyFilters(new URLSearchParams());
+    });
+
+    form.addEventListener('change', () => {
+      const previewParams = new URLSearchParams();
+      categoryInputs
+        .filter((input) => input.checked)
+        .forEach((input) => previewParams.append('category', input.value));
+      if (publisherInput?.value) {
+        previewParams.set('publisher', publisherInput.value);
+      }
+      const previewCards = cards.filter((card) => {
+        const categoryMatches =
+          previewParams.getAll('category').length === 0 ||
+          previewParams.getAll('category').includes(card.dataset.categoryId ?? '');
+        const publisherMatches =
+          !previewParams.has('publisher') || card.dataset.publisherId === previewParams.get('publisher');
+        return categoryMatches && publisherMatches;
+      });
+      status.textContent = `Showing ${previewCards.length} of ${cards.length} games`;
+    });
+
+    window.addEventListener('popstate', () => {
+      applyFilters(new URLSearchParams(window.location.search));
+    });
+
+    applyFilters(new URLSearchParams(window.location.search));
   }
 </script>
