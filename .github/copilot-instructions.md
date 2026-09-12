@@ -48,6 +48,7 @@ This is a crowdfunding platform for games with a developer theme. The applicatio
 
 - **Astro Pages/Components**: routing, layouts, content, and components are all `.astro` - see `astro.instructions.md`
 - Query data directly in page frontmatter via the `src/lib/` helpers (build-time, static output)
+- The home page's category and publisher filters use shareable GET parameters and a small scoped script to filter the prerendered catalog; keep SQL filtering logic in the injectable `src/lib/games.ts` helpers and preserve progressive enhancement
 - Dynamic routes use `getStaticPaths()` + `export const prerender = true`
 - Provide a branded `404.astro` (unknown routes are real 404s under static output)
 - Only add a scoped Astro `<script>` when genuine client interactivity is required

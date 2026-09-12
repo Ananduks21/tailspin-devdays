@@ -24,6 +24,71 @@ test.describe('Game Listing and Navigation', () => {
     });
   });
 
+  test.describe('Game filters', () => {
+    test('should filter games by category', async ({ page }) => {
+      await page.goto('/');
+
+      const strategyFilter = page.getByTestId('category-filter-1');
+      await strategyFilter.check();
+      await expect(page.getByTestId('filter-status')).toHaveText('Showing 4 of 21 games');
+      await expect(page.locator('[data-testid="game-card"]:visible')).toHaveCount(4);
+      await page.getByTestId('apply-filters').click();
+
+      await expect(page).toHaveURL(/category=1/);
+      await expect(page.getByTestId('filter-status')).toHaveText('Showing 4 of 21 games');
+      await expect(page.locator('[data-testid="game-card"]:visible')).toHaveCount(4);
+      await expect(page.locator('[data-testid="game-card"]:visible').getByTestId('game-category')).toHaveText([
+        'Strategy',
+        'Strategy',
+        'Strategy',
+        'Strategy',
+      ]);
+    });
+
+    test('should combine a category and publisher filter', async ({ page }) => {
+      await page.goto('/');
+
+      await page.getByTestId('category-filter-1').check();
+      await page.getByTestId('publisher-filter').selectOption({ label: 'CodeForge Studios' });
+      await expect(page.getByTestId('filter-status')).toHaveText('Showing 1 of 21 games');
+      await expect(page.locator('[data-testid="game-card"]:visible')).toHaveCount(1);
+      await page.getByTestId('apply-filters').click();
+
+      await expect(page).toHaveURL(/category=1.*publisher=1/);
+      await expect(page.getByTestId('filter-status')).toHaveText('Showing 1 of 21 games');
+      await expect(page.locator('[data-testid="game-card"]:visible')).toHaveCount(1);
+      await expect(page.locator('[data-testid="game-card"]:visible').getByTestId('game-title')).toHaveText(
+        'DevOps Dominion',
+      );
+    });
+
+    test('should update the count before applying and show no matches for invalid filters', async ({ page }) => {
+      await page.goto('/');
+
+      await page.getByTestId('category-filter-1').check();
+      await expect(page.getByTestId('filter-status')).toHaveText('Showing 4 of 21 games');
+      await page.goto('/?category=1&publisher=999');
+
+      await expect(page.getByTestId('filter-status')).toHaveText('Showing 0 of 21 games');
+      await expect(page.getByTestId('filtered-empty-state')).toBeVisible();
+      await expect(page.getByTestId('empty-state-text')).toHaveText('No games match the selected filters.');
+      await expect(page.locator('[data-testid="game-card"]:visible')).toHaveCount(0);
+    });
+
+    test('should clear filters and restore them with browser history', async ({ page }) => {
+      await page.goto('/?category=1&publisher=1');
+      await expect(page.getByTestId('filter-status')).toHaveText('Showing 1 of 21 games');
+
+      await page.getByTestId('clear-filters').click();
+      await expect(page).toHaveURL('/');
+      await expect(page.getByTestId('filter-status')).toHaveText('Showing 21 games');
+
+      await page.goBack();
+      await expect(page).toHaveURL('/?category=1&publisher=1');
+      await expect(page.getByTestId('filter-status')).toHaveText('Showing 1 of 21 games');
+    });
+  });
+
   test('should navigate to correct game details page when clicking on a game', async ({ page }) => {
     let gameId: string | null;
     let gameTitle: string | null;
